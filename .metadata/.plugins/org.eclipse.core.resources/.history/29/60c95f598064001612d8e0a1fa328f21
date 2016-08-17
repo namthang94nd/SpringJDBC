@@ -1,0 +1,71 @@
+package com.thang.spring;
+
+import java.util.List;
+
+import javax.sql.DataSource;
+ 
+import org.o7planning.tutorial.springmvcjdbc.dao.DepartmentDAO;
+import org.o7planning.tutorial.springmvcjdbc.mapper.DepartmentMapper;
+import org.o7planning.tutorial.springmvcjdbc.model.Department;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.support.JdbcDaoSupport;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+ 
+@Service
+@Transactional
+public class DepartmentDAOImpl extends JdbcDaoSupport implements DepartmentDAO {
+ 
+   @Autowired
+   public DepartmentDAOImpl(DataSource dataSource) {
+       this.setDataSource(dataSource);
+   }
+ 
+   private int getMaxDeptId() {
+       String sql = "Select max(d.dept_id) from Department d";
+ 
+       Integer value = this.getJdbcTemplate().queryForObject(sql,
+               Integer.class);
+       if (value == null) {
+           return 0;
+       }
+       return value;
+   }
+    
+   @Override
+   public Department findDepartment(String deptNo) {
+       String sql = "Select d.dept_id,d.dept_no,d.dept_name,d.location "
+               + " from Department d where d.dept_no = ?";
+ 
+       Object[] params = new Object[] { deptNo };
+       DepartmentMapper mapper = new DepartmentMapper();
+ 
+       Department dept = this.getJdbcTemplate().queryForObject(sql, params,
+               mapper);
+       return dept;
+   }
+ 
+   @Override
+   public List<Department> listDepartment() {
+       String sql = "Select d.dept_id,d.dept_no,d.dept_name,d.location "
+               + " from Department d";
+ 
+       Object[] params = new Object[] {};
+       DepartmentMapper mapper = new DepartmentMapper();
+ 
+       List<Department> list = this.getJdbcTemplate().query(sql, params,
+               mapper);
+       return list;
+   }
+ 
+   @Override
+   public void insertDepartment(String deptName, String location) {
+       String sql = "Insert into Department (dept_id,dept_no,dept_name,location) "
+               + " values (?,?,?,?) ";
+       int deptId = this.getMaxDeptId() + 1;
+       String deptNo = "D" + deptId;
+       Object[] params = new Object[] { deptId, deptNo, deptName, location };
+       this.getJdbcTemplate().update(sql, params);
+   }
+ 
+}
